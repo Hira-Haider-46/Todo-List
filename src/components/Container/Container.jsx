@@ -6,7 +6,8 @@ import './Container.css';
 
 function Container() {
     const [task, setTask] = useState('');
-    const [tasks, setTasks] = useState([]);
+    const [tasks, setTasks] = useState([]); 
+    const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
         const fetchTasks = async () => {
@@ -39,15 +40,22 @@ function Container() {
         setTasks(tasks.map(task => task.id === id ? { ...task, text: newText } : task));
     };
 
+    const filteredTasks = tasks.filter(task =>
+        task.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <div className="container">
             <div className="search">
                 <input
                     type="text"
                     placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                 />
                 <i className="fa-solid fa-magnifying-glass"></i>
             </div>
+
             <div className='add-task'>
                 <input
                     type="text"
@@ -57,7 +65,8 @@ function Container() {
                 />
                 <button onClick={handleAddTask}>Add Task</button>
             </div>
-            {tasks.map((task) => (
+
+            {filteredTasks.map((task) => (
                 <TodoItem
                     key={task.id}
                     taskId={task.id}
@@ -66,6 +75,10 @@ function Container() {
                     editTask={handleEditTask}
                 />
             ))}
+
+            {filteredTasks.length === 0 && (
+                <p>No tasks found</p>
+            )}
         </div>
     );
 }

@@ -81,3 +81,8 @@
     outline: none;
     animation: pulse 1.5s infinite;
 }
+
+.container p{
+    padding: 2em;
+    margin-left: 33%;
+}
