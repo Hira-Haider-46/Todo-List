@@ -1,0 +1,23 @@
+.todo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: white;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    padding: 0.8em;
+    margin: 1em 0;
+    color: #757070;
+}
+
+.todo-text {
+    font-size: 1rem;
+}
+
+.todo-actions :first-child {
+    margin-right: 0.75em;
+}
+
+.todo-actions i {
+    cursor: pointer;
+}
