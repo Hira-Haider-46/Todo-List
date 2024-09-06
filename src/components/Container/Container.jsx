@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TodoItem from '../TodoItem';
-import { addDoc, collection, getDocs } from 'firebase/firestore';
+import { addDoc, collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase.js';
 import './Container.css';
 
@@ -27,6 +27,12 @@ function Container() {
         }
     };
 
+    const handleDeleteTask = async (id) => {
+        const taskDoc = doc(db, 'tasks', id);
+        await deleteDoc(taskDoc);
+        setTasks(tasks.filter(task => task.id !== id));
+    };
+
     return (
         <div className="container">
             <div className="search">
@@ -46,7 +52,12 @@ function Container() {
                 <button onClick={handleAddTask}>Add Task</button>
             </div>
             {tasks.map((task) => (
-                <TodoItem key={task.id} taskText={task.text} />
+                <TodoItem
+                    key={task.id}
+                    taskId={task.id}
+                    taskText={task.text}
+                    deleteTask={handleDeleteTask}
+                />
             ))}
         </div>
     );
