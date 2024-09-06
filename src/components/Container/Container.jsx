@@ -8,24 +8,30 @@ function Container() {
     const [task, setTask] = useState('');
     const [tasks, setTasks] = useState([]); 
     const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true); 
+    const [loadingAdd, setLoadingAdd] = useState(false); 
 
     useEffect(() => {
         const fetchTasks = async () => {
+            setLoading(true); 
             const tasksCollection = collection(db, 'tasks');
             const tasksSnapshot = await getDocs(tasksCollection);
             const tasksData = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             setTasks(tasksData);
+            setLoading(false); 
         };
         fetchTasks();
     }, []);
 
     const handleAddTask = async () => {
+        setLoadingAdd(true);
         if (task) {
             const tasksCollection = collection(db, 'tasks');
             const docRef = await addDoc(tasksCollection, { text: task });
             setTasks([...tasks, { id: docRef.id, text: task }]);
             setTask('');
         }
+        setLoadingAdd(false);
     };
 
     const handleDeleteTask = async (id) => {
@@ -63,21 +69,27 @@ function Container() {
                     value={task}
                     onChange={(e) => setTask(e.target.value)}
                 />
-                <button onClick={handleAddTask}>Add Task</button>
+                <button onClick={handleAddTask}>
+                    {loadingAdd ? <i class="fa-solid fa-spinner"></i> : 'Add Task' }
+                </button>
             </div>
 
-            {filteredTasks.map((task) => (
-                <TodoItem
-                    key={task.id}
-                    taskId={task.id}
-                    taskText={task.text}
-                    deleteTask={handleDeleteTask}
-                    editTask={handleEditTask}
-                />
-            ))}
-
-            {filteredTasks.length === 0 && (
-                <p>No tasks found</p>
+            {loading ? (
+                <p>Loading...</p>
+            ) : (
+                <>
+                    {filteredTasks.map((task) => (
+                        <TodoItem
+                            key={task.id}
+                            taskId={task.id}
+                            taskText={task.text}
+                            deleteTask={handleDeleteTask}
+                            editTask={handleEditTask}
+                        />
+                    ))}
+                    
+                    {filteredTasks.length === 0 && <p>No tasks found</p>}
+                </>
             )}
         </div>
     );
