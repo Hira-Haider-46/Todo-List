@@ -6,19 +6,19 @@ import './Container.css';
 
 function Container() {
   const [task, setTask] = useState('');
-  const [tasks, setTasks] = useState([]); 
+  const [tasks, setTasks] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true); 
-  const [loadingAdd, setLoadingAdd] = useState(false); 
+  const [loading, setLoading] = useState(true);
+  const [loadingAdd, setLoadingAdd] = useState(false);
 
   useEffect(() => {
     const fetchTasks = async () => {
-      setLoading(true); 
+      setLoading(true);
       const tasksCollection = collection(db, 'tasks');
       const tasksSnapshot = await getDocs(tasksCollection);
       const tasksData = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTasks(tasksData);
-      setLoading(false); 
+      setLoading(false);
     };
     fetchTasks();
   }, []);
@@ -27,12 +27,8 @@ function Container() {
     setLoadingAdd(true);
     if (task) {
       const tasksCollection = collection(db, 'tasks');
-      const currentDateTime = new Date().toISOString();
-      const docRef = await addDoc(tasksCollection, { 
-        text: task, 
-        date: currentDateTime
-      });
-      setTasks([...tasks, { id: docRef.id, text: task, date: currentDateTime }]);
+      const docRef = await addDoc(tasksCollection, { text: task, date: new Date() }); 
+      setTasks([...tasks, { id: docRef.id, text: task, date: new Date() }]);
       setTask('');
     }
     setLoadingAdd(false);
@@ -44,10 +40,12 @@ function Container() {
     setTasks(tasks.filter(task => task.id !== id));
   };
 
-  const handleEditTask = async (id, newText) => {
+  const handleEditTask = async (id, newText, updatedDate) => {
     const taskDoc = doc(db, 'tasks', id);
-    await updateDoc(taskDoc, { text: newText });
-    setTasks(tasks.map(task => task.id === id ? { ...task, text: newText } : task));
+    await updateDoc(taskDoc, { text: newText, date: updatedDate });
+    setTasks(tasks.map(task => 
+      task.id === id ? { ...task, text: newText, date: updatedDate } : task
+    ));
   };
 
   const filteredTasks = tasks.filter(task =>
@@ -73,8 +71,11 @@ function Container() {
           value={task}
           onChange={(e) => setTask(e.target.value)}
         />
-        <button onClick={handleAddTask} disabled={loadingAdd}>
-          {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task' }
+        <button 
+          onClick={handleAddTask} 
+          disabled={loadingAdd}
+        >
+          {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task'}
         </button>
       </div>
 
@@ -92,7 +93,7 @@ function Container() {
               editTask={handleEditTask}
             />
           ))}
-          
+
           {filteredTasks.length === 0 && <p>No tasks found</p>}
         </>
       )}

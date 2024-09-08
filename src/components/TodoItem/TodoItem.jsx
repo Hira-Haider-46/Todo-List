@@ -14,7 +14,8 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
   const handleSave = async () => {
     if (newText !== taskText) {
       setLoadingEdit(true);
-      await editTask(taskId, newText);
+      const updatedDate = new Date();
+      await editTask(taskId, newText, updatedDate); 
       setLoadingEdit(false);
     }
     setIsEditing(false);
@@ -38,9 +39,12 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return 'Invalid Date';
+    }
 
     const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true }; 
 
     const formattedDate = date.toLocaleDateString(undefined, dateOptions);
     const formattedTime = date.toLocaleTimeString(undefined, timeOptions);
