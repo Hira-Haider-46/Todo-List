@@ -73,7 +73,7 @@ function Container() {
           value={task}
           onChange={(e) => setTask(e.target.value)}
         />
-        <button onClick={handleAddTask}>
+        <button onClick={handleAddTask} disabled={loadingAdd}>
           {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task' }
         </button>
       </div>
