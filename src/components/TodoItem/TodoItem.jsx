@@ -48,7 +48,6 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
 
   };
 
-
   return (
     <div className="todo-item">
       {isEditing ? (

@@ -11,41 +11,51 @@ function Container() {
     const [loading, setLoading] = useState(true);
     const [loadingAdd, setLoadingAdd] = useState(false);
 
-    const sortTasksByDate = (tasks) => {
-        return tasks.sort((a, b) => b.date - a.date);
-    };
-
     useEffect(() => {
-        const fetchTasks = async () => {
-            setLoading(true);
-            const tasksCollection = collection(db, 'tasks');
-            const tasksSnapshot = await getDocs(tasksCollection);
-            const tasksData = tasksSnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                date: doc.data().date.toDate()
-            }));
-
-            setTasks(sortTasksByDate(tasksData));
-            setLoading(false);
-        };
         fetchTasks();
     }, []);
 
+    const fetchTasks = async () => {
+        setLoading(true);
+        const tasksCollection = collection(db, 'tasks');
+        const tasksSnapshot = await getDocs(tasksCollection);
+
+        const tasksData = tasksSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                date: data.date.toDate()
+            };
+        });
+
+        const sortedTasks = tasksData.sort((a, b) => b.date - a.date);
+        setTasks(sortedTasks);
+        setLoading(false);
+    };
+
     const handleAddTask = async () => {
-        setLoadingAdd(true);
-        if (task) {
+        if (task.trim()) {
+            setLoadingAdd(true);
+
+            const currentDate = Timestamp.now();
+
             const tasksCollection = collection(db, 'tasks');
             const docRef = await addDoc(tasksCollection, {
                 text: task,
-                date: Timestamp.now()
+                date: currentDate
             });
-            const newTask = { id: docRef.id, text: task, date: Timestamp.now() };
 
-            setTasks(sortTasksByDate([...tasks, newTask]));
+            const newTask = { id: docRef.id, text: task, date: currentDate.toDate() };
+            const updatedTasks = [...tasks, newTask];
+
+        
+            const sortedTasks = updatedTasks.sort((a, b) => b.date - a.date);
+            setTasks(sortedTasks);
+
             setTask('');
+            setLoadingAdd(false);
         }
-        setLoadingAdd(false);
     };
 
     const handleDeleteTask = async (id) => {
@@ -55,12 +65,17 @@ function Container() {
     };
 
     const handleEditTask = async (id, newText) => {
-        const updatedDate = Timestamp.now();
         const taskDoc = doc(db, 'tasks', id);
-        await updateDoc(taskDoc, { text: newText, date: updatedDate });
-        setTasks(sortTasksByDate(tasks.map(task =>
-            task.id === id ? { ...task, text: newText, date: updatedDate.toDate() } : task
-        )));
+        const newDate = Timestamp.now();
+
+        await updateDoc(taskDoc, {
+            text: newText,
+            date: newDate
+        });
+
+        const updatedTasks = tasks.map(task => task.id === id ? { ...task, text: newText, date: newDate.toDate() } : task);
+        const sortedTasks = updatedTasks.sort((a, b) => b.date - a.date);
+        setTasks(sortedTasks);
     };
 
     const filteredTasks = tasks.filter(task =>
@@ -88,7 +103,7 @@ function Container() {
                 />
                 <button
                     onClick={handleAddTask}
-                    disabled={loadingAdd}
+                    disabled={loadingAdd || !task.trim()}  // Disable for empty task
                 >
                     {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task'}
                 </button>
@@ -98,18 +113,20 @@ function Container() {
                 <p>Loading...</p>
             ) : (
                 <>
-                    {filteredTasks.map((task) => (
-                        <TodoItem
-                            key={task.id}
-                            taskId={task.id}
-                            taskText={task.text}
-                            taskDate={task.date}
-                            deleteTask={handleDeleteTask}
-                            editTask={handleEditTask}
-                        />
-                    ))}
-
-                    {filteredTasks.length === 0 && <p>No tasks found</p>}
+                    {filteredTasks.length > 0 ? (
+                        filteredTasks.map(task => (
+                            <TodoItem
+                                key={task.id}
+                                taskId={task.id}
+                                taskText={task.text}
+                                taskDate={task.date}
+                                deleteTask={handleDeleteTask}
+                                editTask={handleEditTask}
+                            />
+                        ))
+                    ) : (
+                        <p>No tasks found</p>
+                    )}
                 </>
             )}
         </div>
