@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './TodoItem.css';
 
-function TodoItem({ taskId, taskText, deleteTask, editTask }) {
+function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
   const [isEditing, setIsEditing] = useState(false);
   const [newText, setNewText] = useState(taskText);
   const [loadingDelete, setLoadingDelete] = useState(false);
@@ -13,9 +13,9 @@ function TodoItem({ taskId, taskText, deleteTask, editTask }) {
 
   const handleSave = async () => {
     if (newText !== taskText) {
-      setLoadingEdit(true); 
-      await editTask(taskId, newText); 
-      setLoadingEdit(false); 
+      setLoadingEdit(true);
+      await editTask(taskId, newText);
+      setLoadingEdit(false);
     }
     setIsEditing(false);
   };
@@ -33,7 +33,19 @@ function TodoItem({ taskId, taskText, deleteTask, editTask }) {
   const handleDeleteTask = async () => {
     setLoadingDelete(true);
     await deleteTask(taskId);
-    setLoadingDelete(false); 
+    setLoadingDelete(false);
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+
+    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+
+    const formattedDate = date.toLocaleDateString(undefined, dateOptions);
+    const formattedTime = date.toLocaleTimeString(undefined, timeOptions);
+
+    return `${formattedDate}, ${formattedTime}`;
   };
 
   return (
@@ -46,9 +58,12 @@ function TodoItem({ taskId, taskText, deleteTask, editTask }) {
           onKeyDown={handleKeyDown}
         />
       ) : (
-        <span className="todo-text">{taskText}</span>
+        <>
+          <span className="todo-text">{taskText}</span>
+          <span className="todo-date">{formatDate(taskDate)}</span>
+        </>
       )}
-      
+
       <div className="todo-actions">
         {isEditing ? (
           loadingEdit ? (
