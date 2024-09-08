@@ -14,8 +14,7 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
   const handleSave = async () => {
     if (newText !== taskText) {
       setLoadingEdit(true);
-      const updatedDate = new Date();
-      await editTask(taskId, newText, updatedDate); 
+      await editTask(taskId, newText);
       setLoadingEdit(false);
     }
     setIsEditing(false);
@@ -37,20 +36,18 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
     setLoadingDelete(false);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      return 'Invalid Date';
-    }
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
 
-    const dateOptions = { year: 'numeric', month: 'long', day: 'numeric' };
-    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true }; 
-
-    const formattedDate = date.toLocaleDateString(undefined, dateOptions);
-    const formattedTime = date.toLocaleTimeString(undefined, timeOptions);
-
-    return `${formattedDate}, ${formattedTime}`;
   };
+
 
   return (
     <div className="todo-item">
@@ -62,12 +59,9 @@ function TodoItem({ taskId, taskText, taskDate, deleteTask, editTask }) {
           onKeyDown={handleKeyDown}
         />
       ) : (
-        <>
-          <span className="todo-text">{taskText}</span>
-          <span className="todo-date">{formatDate(taskDate)}</span>
-        </>
+        <span className="todo-text">{taskText}</span>
       )}
-
+      <span className="task-date">{formatDate(taskDate)}</span>
       <div className="todo-actions">
         {isEditing ? (
           loadingEdit ? (

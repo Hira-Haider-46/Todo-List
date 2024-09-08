@@ -12,12 +12,11 @@
 
 .todo-text {
     font-size: 1rem;
+    width: 40%;
 }
 
-.todo-date {
+.task-date {
     font-size: 0.8em;
-    color: #888;
-    margin-left: 10px;
 }
 
 .todo-actions :first-child {

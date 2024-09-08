@@ -1,104 +1,119 @@
 import React, { useState, useEffect } from 'react';
 import TodoItem from '../TodoItem';
-import { addDoc, collection, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, getDocs, deleteDoc, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { db } from '../../firebase.js';
 import './Container.css';
 
 function Container() {
-  const [task, setTask] = useState('');
-  const [tasks, setTasks] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [loadingAdd, setLoadingAdd] = useState(false);
+    const [task, setTask] = useState('');
+    const [tasks, setTasks] = useState([]);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [loadingAdd, setLoadingAdd] = useState(false);
 
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      const tasksCollection = collection(db, 'tasks');
-      const tasksSnapshot = await getDocs(tasksCollection);
-      const tasksData = tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTasks(tasksData);
-      setLoading(false);
+    const sortTasksByDate = (tasks) => {
+        return tasks.sort((a, b) => b.date - a.date);
     };
-    fetchTasks();
-  }, []);
 
-  const handleAddTask = async () => {
-    setLoadingAdd(true);
-    if (task) {
-      const tasksCollection = collection(db, 'tasks');
-      const docRef = await addDoc(tasksCollection, { text: task, date: new Date() }); 
-      setTasks([...tasks, { id: docRef.id, text: task, date: new Date() }]);
-      setTask('');
-    }
-    setLoadingAdd(false);
-  };
+    useEffect(() => {
+        const fetchTasks = async () => {
+            setLoading(true);
+            const tasksCollection = collection(db, 'tasks');
+            const tasksSnapshot = await getDocs(tasksCollection);
+            const tasksData = tasksSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data(),
+                date: doc.data().date.toDate()
+            }));
 
-  const handleDeleteTask = async (id) => {
-    const taskDoc = doc(db, 'tasks', id);
-    await deleteDoc(taskDoc);
-    setTasks(tasks.filter(task => task.id !== id));
-  };
+            setTasks(sortTasksByDate(tasksData));
+            setLoading(false);
+        };
+        fetchTasks();
+    }, []);
 
-  const handleEditTask = async (id, newText, updatedDate) => {
-    const taskDoc = doc(db, 'tasks', id);
-    await updateDoc(taskDoc, { text: newText, date: updatedDate });
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, text: newText, date: updatedDate } : task
-    ));
-  };
+    const handleAddTask = async () => {
+        setLoadingAdd(true);
+        if (task) {
+            const tasksCollection = collection(db, 'tasks');
+            const docRef = await addDoc(tasksCollection, {
+                text: task,
+                date: Timestamp.now()
+            });
+            const newTask = { id: docRef.id, text: task, date: Timestamp.now() };
 
-  const filteredTasks = tasks.filter(task =>
-    task.text.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+            setTasks(sortTasksByDate([...tasks, newTask]));
+            setTask('');
+        }
+        setLoadingAdd(false);
+    };
 
-  return (
-    <div className="container">
-      <div className="search">
-        <input
-          type="text"
-          placeholder="Search tasks..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <i className="fa-solid fa-magnifying-glass"></i>
-      </div>
+    const handleDeleteTask = async (id) => {
+        const taskDoc = doc(db, 'tasks', id);
+        await deleteDoc(taskDoc);
+        setTasks(tasks.filter(task => task.id !== id));
+    };
 
-      <div className='add-task'>
-        <input
-          type="text"
-          placeholder="Add a new Task..."
-          value={task}
-          onChange={(e) => setTask(e.target.value)}
-        />
-        <button 
-          onClick={handleAddTask} 
-          disabled={loadingAdd}
-        >
-          {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task'}
-        </button>
-      </div>
+    const handleEditTask = async (id, newText) => {
+        const updatedDate = Timestamp.now();
+        const taskDoc = doc(db, 'tasks', id);
+        await updateDoc(taskDoc, { text: newText, date: updatedDate });
+        setTasks(sortTasksByDate(tasks.map(task =>
+            task.id === id ? { ...task, text: newText, date: updatedDate.toDate() } : task
+        )));
+    };
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <>
-          {filteredTasks.map((task) => (
-            <TodoItem
-              key={task.id}
-              taskId={task.id}
-              taskText={task.text}
-              taskDate={task.date} 
-              deleteTask={handleDeleteTask}
-              editTask={handleEditTask}
-            />
-          ))}
+    const filteredTasks = tasks.filter(task =>
+        task.text.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
-          {filteredTasks.length === 0 && <p>No tasks found</p>}
-        </>
-      )}
-    </div>
-  );
+    return (
+        <div className="container">
+            <div className="search">
+                <input
+                    type="text"
+                    placeholder="Search tasks..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                <i className="fa-solid fa-magnifying-glass"></i>
+            </div>
+
+            <div className='add-task'>
+                <input
+                    type="text"
+                    placeholder="Add a new Task..."
+                    value={task}
+                    onChange={(e) => setTask(e.target.value)}
+                />
+                <button
+                    onClick={handleAddTask}
+                    disabled={loadingAdd}
+                >
+                    {loadingAdd ? <i className="fa-solid fa-spinner"></i> : 'Add Task'}
+                </button>
+            </div>
+
+            {loading ? (
+                <p>Loading...</p>
+            ) : (
+                <>
+                    {filteredTasks.map((task) => (
+                        <TodoItem
+                            key={task.id}
+                            taskId={task.id}
+                            taskText={task.text}
+                            taskDate={task.date}
+                            deleteTask={handleDeleteTask}
+                            editTask={handleEditTask}
+                        />
+                    ))}
+
+                    {filteredTasks.length === 0 && <p>No tasks found</p>}
+                </>
+            )}
+        </div>
+    );
 }
 
 export default Container;
